@@ -3,7 +3,7 @@ import os
 import shutil
 
 import numpy as np
-import PyPDF2
+# import PyPDF2
 import streamlit as st
 from pdf2image import convert_from_bytes, convert_from_path
 # import pdfminer
