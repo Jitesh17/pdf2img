@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 from pdf2image import convert_from_bytes, convert_from_path
-from utils import upload_pdf, load_image
+
+from utils import load_image, upload_pdf
 
 st.set_page_config(layout="wide")
 
@@ -13,7 +16,8 @@ class pdf2img:
     def run_the_app(self, ):
         st.title('PDF to Image convertor')
         pdf_file = upload_pdf()
-        
+        if not os.path.exists("data"):
+            os.mkdir("data")
         convert_from_bytes(
             pdf_file,
             dpi=200,
