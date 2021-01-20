@@ -1,7 +1,9 @@
 import base64
 import os
 import shutil
-
+from datetime import datetime
+import io
+from PIL import Image
 import numpy as np
 # import PyPDF2
 import streamlit as st
@@ -12,19 +14,17 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 
 from utils import load_image, upload_pdf
 
-
-def add_encryption(input_pdf, output_pdf, password):
-    pdf_writer = PdfFileWriter()
-    pdf_reader = PdfFileReader(input_pdf)
-
-    for page in range(pdf_reader.getNumPages()):
-        pdf_writer.addPage(pdf_reader.getPage(page))
-
-    pdf_writer.encrypt(user_pwd=password, owner_pwd=None,
-                       use_128bit=True)
-
-    with open(output_pdf, 'wb') as fh:
-        pdf_writer.write(fh)
+st.set_page_config(layout="wide")
+def get_image_download_link(img):
+	"""Generates a link allowing the PIL image to be downloaded
+	in:  PIL image
+	out: href string
+	"""
+	buffered = io.BytesIO()
+	img.save(buffered, format="JPEG")
+	img_str = base64.b64encode(buffered.getvalue()).decode()
+	href = f'<a href="data:file/jpg;base64,{img_str}">Download</a>'
+	return href
 
 
 class pdf2img:
@@ -42,7 +42,7 @@ class pdf2img:
             os.mkdir("data")
         if pdf_file is not None:
             if os.path.exists("data"):
-                self.show_pdf(pdf_file)
+                # self.show_pdf(pdf_file)
                 self.write_pdf(pdf_file)
                 self.convert_pdf2img()
                 self.show_img()
@@ -72,13 +72,18 @@ class pdf2img:
 
     def convert_pdf2img(self):
 
+        now = datetime.now()
+        dt_string = now.strftime("%Y_%m_%d_%H_%M_%S")
+        pdf2img_col = st.sidebar.beta_container()
+        dpi = pdf2img_col.number_input('Enter DPI', value=200)
+        fmt = pdf2img_col.selectbox('Select image format', ['jpeg', 'jpg', 'png', 'ppm'], index=1)
         convert_from_path(
             'data/temp.pdf',
-            dpi=200,
+            dpi=dpi,
             output_folder="data",
             first_page=None,
             last_page=None,
-            fmt="jpg",
+            fmt=fmt,
             jpegopt=None,
             thread_count=1,
             userpw=None,
@@ -86,7 +91,7 @@ class pdf2img:
             strict=False,
             transparent=False,
             single_file=False,
-            output_file="temp",
+            output_file=f"temp_{dt_string}",
             poppler_path=None,
             grayscale=False,
             size=None,
@@ -97,12 +102,20 @@ class pdf2img:
 
     def show_img(self):
         st.markdown('## Images')
-        for path in [p for p in os.listdir("data") if 'jpg' in p]:
+        image_paths =[p for p in os.listdir("data") if 'jpg' in p]
+        col = []
+        n = len(image_paths)
+        n_cols = st.slider('Number of columns', min_value=1, max_value=10, value=3)
+        while n > 0:
+            col += st.beta_columns([1]*n_cols)
+            n = n - n_cols
+        for i, path in enumerate(image_paths):
             output = load_image(path, "data")
-            st.image(image=output.astype(np.uint8),
+            col[i].image(image=output.astype(np.uint8),
                      use_column_width=True
                      )
-
+            result = Image.fromarray(output)
+            col[i].markdown(get_image_download_link(result), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     pdf2img()
