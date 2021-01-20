@@ -1,30 +1,59 @@
 import base64
+import io
 import os
 import shutil
 from datetime import datetime
-import io
-from PIL import Image
+
+import cv2
 import numpy as np
 # import PyPDF2
 import streamlit as st
 from pdf2image import convert_from_bytes, convert_from_path
+from PIL import Image
 # import pdfminer
 # from pdfminer import extract_pages
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
-from utils import load_image, upload_pdf
+# from utils import load_image, upload_pdf
 
-st.set_page_config(layout="wide")
+
+@st.cache
+def load_image(image_name: str, path_to_folder: str, bgr2rgb: bool = True):
+    """Load the image
+    Args:
+        image_name (str): name of the image
+        path_to_folder (str): path to the folder with image
+        bgr2rgb (bool): converts BGR image to RGB if True
+    """
+    # path_to_image = os.path.join(path_to_folder, image_name)
+    path_to_image = f"{path_to_folder}/{image_name}"
+    image = cv2.imread(path_to_image)
+    if bgr2rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+
+def upload_pdf():
+    """Uoload the pdf
+    """
+    file = st.sidebar.file_uploader(
+        "Upload your pdf ", ["pdf"]
+    )
+
+    return file
+# st.set_page_config(layout="wide")
+
+
 def get_image_download_link(img):
-	"""Generates a link allowing the PIL image to be downloaded
-	in:  PIL image
-	out: href string
-	"""
-	buffered = io.BytesIO()
-	img.save(buffered, format="JPEG")
-	img_str = base64.b64encode(buffered.getvalue()).decode()
-	href = f'<a href="data:file/jpg;base64,{img_str}">Download</a>'
-	return href
+    """Generates a link allowing the PIL image to be downloaded
+    in:  PIL image
+    out: href string
+    """
+    buffered = io.BytesIO()
+    img.save(buffered, format="JPEG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    href = f'<a href="data:file/jpg;base64,{img_str}">Download</a>'
+    return href
 
 
 class pdf2img:
@@ -76,7 +105,8 @@ class pdf2img:
         dt_string = now.strftime("%Y_%m_%d_%H_%M_%S")
         pdf2img_col = st.sidebar.beta_container()
         dpi = pdf2img_col.number_input('Enter DPI', value=200)
-        fmt = pdf2img_col.selectbox('Select image format', ['jpeg', 'jpg', 'png', 'ppm'], index=1)
+        fmt = pdf2img_col.selectbox('Select image format', [
+                                    'jpeg', 'jpg', 'png', 'ppm'], index=1)
         convert_from_path(
             'data/temp.pdf',
             dpi=dpi,
@@ -102,20 +132,23 @@ class pdf2img:
 
     def show_img(self):
         st.markdown('## Images')
-        image_paths =[p for p in os.listdir("data") if 'jpg' in p]
+        image_paths = [p for p in os.listdir("data") if 'jpg' in p]
         col = []
         n = len(image_paths)
-        n_cols = st.slider('Number of columns', min_value=1, max_value=10, value=3)
+        n_cols = st.slider('Number of columns', min_value=1,
+                           max_value=10, value=3)
         while n > 0:
             col += st.beta_columns([1]*n_cols)
             n = n - n_cols
         for i, path in enumerate(image_paths):
             output = load_image(path, "data")
             col[i].image(image=output.astype(np.uint8),
-                     use_column_width=True
-                     )
+                         use_column_width=True
+                         )
             result = Image.fromarray(output)
-            col[i].markdown(get_image_download_link(result), unsafe_allow_html=True)
+            col[i].markdown(get_image_download_link(
+                result), unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     pdf2img()
