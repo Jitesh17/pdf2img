@@ -2,8 +2,8 @@
 # import json
 # import os
 
-# import cv2
-# import numpy as np
+import cv2
+import numpy as np
 import streamlit as st
 
 
@@ -54,18 +54,18 @@ def upload_pdf():
     return file
 
 
-# def upload_image(bgr2rgb: bool = True):
-#     """Uoload the image
-#     Args:
-#         bgr2rgb (bool): converts BGR image to RGB if True
-#     """
-#     file = st.sidebar.file_uploader(
-#         "Upload your image (jpg, jpeg, or png)", ["jpg", "jpeg", "png"]
-#     )
-#     image = cv2.imdecode(np.fromstring(file.read(), np.uint8), 1)
-#     if bgr2rgb:
-#         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     return image
+def upload_image(bgr2rgb: bool = True):
+    """Uoload the image
+    Args:
+        bgr2rgb (bool): converts BGR image to RGB if True
+    """
+    file = st.sidebar.file_uploader(
+        "Upload your image (jpg, jpeg, or png)", ["jpg", "jpeg", "png"]
+    )
+    image = cv2.imdecode(np.fromstring(file.read(), np.uint8), 1)
+    if bgr2rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
 
 
 # def select_image(path_to_images: str, interface_type: str = "Professional"):
