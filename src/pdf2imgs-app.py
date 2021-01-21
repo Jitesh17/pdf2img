@@ -67,6 +67,8 @@ class pdf2img:
         st.title('PDF to Image convertor')
         st.balloons()
         pdf_file = upload_pdf()
+        if os.path.exists("data"):
+            shutil.rmtree("data")
         if not os.path.exists("data"):
             os.mkdir("data")
         if pdf_file is not None:
@@ -75,8 +77,6 @@ class pdf2img:
                 self.write_pdf(pdf_file)
                 self.convert_pdf2img()
                 self.show_img()
-        if os.path.exists("data"):
-            shutil.rmtree("data")
 
     def show_pdf(self, pdf_file):
         st.markdown('## PDF')
